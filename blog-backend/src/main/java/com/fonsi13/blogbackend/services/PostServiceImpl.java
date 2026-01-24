@@ -32,7 +32,7 @@ public class PostServiceImpl implements PostService{
         User currentUser = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
 
-        // Generar el Slug a partir del titulo
+        // Generar el Slug a partir del título
         String slug = generateSlug(request.getTitle());
 
         //Crear la entidad post
@@ -54,21 +54,8 @@ public class PostServiceImpl implements PostService{
         // Guardar en Mongo
         Post savedPost = postRepository.save(post);
 
-        // Convertir a responseDTO
-        PostResponseDTO response = PostResponseDTO.builder()
-                .id(savedPost.getId())
-                .title(savedPost.getTitle())
-                .slug(savedPost.getSlug())
-                .content(savedPost.getContent())
-                .summary(savedPost.getSummary())
-                .coverImage(request.getCoverImage())
-                .images(request.getImages())
-                .videoUrls(request.getVideoUrls())
-                .authorId(savedPost.getAuthorId())
-                .topics(savedPost.getTopics())
-                .status(savedPost.getStatus())
-                .createdAt(savedPost.getCreatedAt())
-                .build();
+        // Mapear a ResponseDTO
+        PostResponseDTO response = mapToDTO(savedPost);
 
         return ApiResponse.success("Post creado exitosamente", response);
     }
@@ -79,20 +66,7 @@ public class PostServiceImpl implements PostService{
         Page<Post> postsPage = postRepository.findAll(pageable);
 
         // 2. Mapear cada entidad post a postResponseDTO
-        Page<PostResponseDTO> dtoPage = postsPage.map(post -> PostResponseDTO.builder()
-                .id(post.getId())
-                .title(post.getTitle())
-                .slug(post.getSlug())
-                .content(post.getContent()) // Ojo: En un listado real, quizás quieras cortar esto a 200 caracteres
-                .summary(post.getSummary())
-                .coverImage(post.getCoverImage())
-                .images(post.getImages())
-                .videoUrls(post.getVideoUrls())
-                .authorId(post.getAuthorId())
-                .topics(post.getTopics())
-                .status(post.getStatus())
-                .createdAt(post.getCreatedAt())
-                .build());
+        Page<PostResponseDTO> dtoPage = postsPage.map(post -> mapToDTO(post));
 
         return ApiResponse.success("Posts Obtenidos exitosamente", dtoPage);
     }
@@ -102,20 +76,7 @@ public class PostServiceImpl implements PostService{
         Post post = postRepository.findBySlug(slug)
                 .orElseThrow(() -> new RuntimeException("Post no encontrado"));
 
-        PostResponseDTO response = PostResponseDTO.builder()
-                .id(post.getId())
-                .title(post.getTitle())
-                .slug(post.getSlug())
-                .content(post.getContent())
-                .summary(post.getSummary())
-                .coverImage(post.getCoverImage())
-                .images(post.getImages())
-                .videoUrls(post.getVideoUrls())
-                .authorId(post.getAuthorId())
-                .topics(post.getTopics())
-                .status(post.getStatus())
-                .createdAt(post.getCreatedAt())
-                .build();
+        PostResponseDTO response = mapToDTO(post);
 
         return ApiResponse.success("Post encontrado", response);
     }
@@ -126,5 +87,25 @@ public class PostServiceImpl implements PostService{
         String normalized = Normalizer.normalize(nowhitespace, Normalizer.Form.NFD);
         String slug = Pattern.compile("[^\\w-]").matcher(normalized).replaceAll("");
         return slug.toLowerCase(Locale.ENGLISH) + "-" + System.currentTimeMillis(); // Agregamos tiempo para evitar duplicados
+    }
+
+    // Método auxiliar para no repetir código (Úsalo también en getAllPosts y getPostBySlug)
+    private PostResponseDTO mapToDTO(Post post) {
+        return PostResponseDTO.builder()
+                .id(post.getId())
+                .title(post.getTitle())
+                .slug(post.getSlug())
+                .content(post.getContent())
+                .summary(post.getSummary())
+                .authorId(post.getAuthorId())
+                .topics(post.getTopics())
+                .status(post.getStatus())
+                .createdAt(post.getCreatedAt())
+                // --- NUEVOS CAMPOS ---
+                .coverImage(post.getCoverImage())
+                .images(post.getImages())
+                .videoUrls(post.getVideoUrls())
+                // ---------------------
+                .build();
     }
 }
