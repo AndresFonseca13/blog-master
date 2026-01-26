@@ -3,6 +3,7 @@ package com.fonsi13.blogbackend.services;
 import com.fonsi13.blogbackend.config.security.JwtService;
 import com.fonsi13.blogbackend.dto.*;
 import com.fonsi13.blogbackend.exceptions.ResourceNotFoundException;
+import com.fonsi13.blogbackend.models.AuthProvider;
 import com.fonsi13.blogbackend.models.User;
 import com.fonsi13.blogbackend.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,36 +31,36 @@ public class UserServiceImpl implements UserService{
         if (userRepository.existsByEmail(request.getEmail())){
             return ApiResponse.error("El correo ya se encuentra registrado.");
         }
-        // Mapeo manual de DTO a entidad
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(passwordEncoder.encode(request.getPassword())); //TODO: ByCript
-        user.setRole("USER");
-        user.setCreatedAt(LocalDateTime.now());
 
-        //Guardar en mongo
-        User savedUser = userRepository.save(user);
-
-        //Mapeo de entidad a ResponseDTO
-        UserResponseDTO responseData = UserResponseDTO.builder()
-                .id(savedUser.getId())
-                .username(savedUser.getUsername())
-                .email(savedUser.getEmail())
-                .role(savedUser.getRole())
-                .createdAt(savedUser.getCreatedAt())
+        // Crear usuario con builder
+        User user = User.builder()
+                .username(request.getUsername())
+                .email(request.getEmail())
+                .password(passwordEncoder.encode(request.getPassword()))
+                .role("USER")
+                .provider(AuthProvider.LOCAL)
+                .emailVerified(false)
+                .createdAt(LocalDateTime.now())
                 .build();
 
-        return ApiResponse.success("Registo exitoso", responseData);
+        // Guardar en mongo
+        User savedUser = userRepository.save(user);
+
+        return ApiResponse.success("Registro exitoso", mapToDTO(savedUser));
     }
 
     @Override
     public ApiResponse<AuthResponseDTO> login(UserLoginRequest request) {
-        //Buscar usuario por email
+        // Buscar usuario por username
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", "username", request.getUsername()));
 
-        //Verificar la contraseña
+        // Verificar que el usuario tenga password (no sea solo OAuth)
+        if (user.getPassword() == null || user.getPassword().isEmpty()) {
+            return ApiResponse.error("Este usuario solo puede iniciar sesión con " + user.getProvider());
+        }
+
+        // Verificar la contraseña
         boolean isPasswordMatch = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
         if (!isPasswordMatch){
@@ -68,22 +69,26 @@ public class UserServiceImpl implements UserService{
 
         String token = jwtService.generateToken(user.getUsername());
 
-        //Preparar los datos del usuario
-        UserResponseDTO userData = UserResponseDTO.builder()
+        // Empaquetar respuesta
+        AuthResponseDTO authResponse = AuthResponseDTO.builder()
+                .token(token)
+                .user(mapToDTO(user))
+                .build();
+
+        return ApiResponse.success("Login exitoso", authResponse);
+    }
+
+    // Método auxiliar para mapear User a UserResponseDTO
+    private UserResponseDTO mapToDTO(User user) {
+        return UserResponseDTO.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
                 .role(user.getRole())
                 .createdAt(user.getCreatedAt())
+                .provider(user.getProvider())
+                .profilePicture(user.getProfilePicture())
+                .emailVerified(user.isEmailVerified())
                 .build();
-
-        //Empaquetar t odo en la nueva respuesta
-        AuthResponseDTO authResponse = AuthResponseDTO.builder()
-                .token(token)
-                .user(userData)
-                .build();
-
-
-        return ApiResponse.success("Login exitoso", authResponse);
     }
 }
