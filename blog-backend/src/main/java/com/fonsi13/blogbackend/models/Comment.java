@@ -26,4 +26,6 @@ public class Comment {
     private String authorId;
 
     private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 }

@@ -12,5 +12,7 @@ public class CommentResponseDTO {
     private String id;
     private String content;
     private String authorId;
+    private String postId;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

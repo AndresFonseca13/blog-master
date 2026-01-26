@@ -3,10 +3,13 @@ package com.fonsi13.blogbackend.services;
 import com.fonsi13.blogbackend.dto.ApiResponse;
 import com.fonsi13.blogbackend.dto.CommentCreateRequest;
 import com.fonsi13.blogbackend.dto.CommentResponseDTO;
+import com.fonsi13.blogbackend.dto.CommentUpdateRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
 public interface CommentService {
     ApiResponse<CommentResponseDTO> createComment(String postId, CommentCreateRequest request, String currentUsername);
     ApiResponse<Page<CommentResponseDTO>> getCommentByPost(String postId, Pageable pageable);
+    ApiResponse<CommentResponseDTO> updateComment(String postId, String commentId, CommentUpdateRequest request, String currentUsername);
+    ApiResponse<Void> deleteComment(String postId, String commentId, String currentUsername);
 }

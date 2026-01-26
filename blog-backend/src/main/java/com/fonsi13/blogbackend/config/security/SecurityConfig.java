@@ -1,5 +1,7 @@
 package com.fonsi13.blogbackend.config.security;
 
+import com.fonsi13.blogbackend.security.oauth2.CustomOAuth2UserService;
+import com.fonsi13.blogbackend.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,23 +20,27 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthFilter;
+    private final CustomOAuth2UserService customOAuth2UserService;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
-    //Definir Encriptador
+    // Definir Encriptador
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
     }
 
-    //Filtro de Seguridad
+    // Filtro de Seguridad
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http
-                // Desactivamos CSRF porque vamos a usar JWT más adelante (es estándar en APIs REST)
+                // Desactivamos CSRF porque usamos JWT (es estándar en APIs REST)
                 .csrf(AbstractHttpConfigurer::disable)
                 // Definimos las reglas de las rutas
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/users/register").permitAll()
-                        .requestMatchers("/api/v1/users/login").permitAll()// Permitir registro a todos
+                        .requestMatchers("/api/v1/users/login").permitAll()
+                        .requestMatchers("/oauth2/**").permitAll()
+                        .requestMatchers("/login/oauth2/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()
                         .requestMatchers("/api/v1/storage/upload").authenticated()
                         .requestMatchers(
@@ -42,12 +48,17 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/swagger-ui.html"
                         ).permitAll()
-                        .anyRequest().authenticated() //Lo demás requiere login
+                        .anyRequest().authenticated()
+                )
+                // Configuración OAuth2
+                .oauth2Login(oauth2 -> oauth2
+                        .userInfoEndpoint(userInfo -> userInfo
+                                .userService(customOAuth2UserService)
+                        )
+                        .successHandler(oAuth2AuthenticationSuccessHandler)
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
-
-
 }

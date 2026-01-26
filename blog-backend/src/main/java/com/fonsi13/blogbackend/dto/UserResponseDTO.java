@@ -1,5 +1,6 @@
 package com.fonsi13.blogbackend.dto;
 
+import com.fonsi13.blogbackend.models.AuthProvider;
 import lombok.Builder;
 import lombok.Data;
 
@@ -13,6 +14,7 @@ public class UserResponseDTO {
     private String email;
     private String role;
     private LocalDateTime createdAt;
-
-
+    private AuthProvider provider;
+    private String profilePicture;
+    private boolean emailVerified;
 }

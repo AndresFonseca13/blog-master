@@ -3,6 +3,9 @@ package com.fonsi13.blogbackend.services;
 import com.fonsi13.blogbackend.dto.ApiResponse;
 import com.fonsi13.blogbackend.dto.PostCreateRequest;
 import com.fonsi13.blogbackend.dto.PostResponseDTO;
+import com.fonsi13.blogbackend.dto.PostUpdateRequest;
+import com.fonsi13.blogbackend.exceptions.ResourceNotFoundException;
+import com.fonsi13.blogbackend.exceptions.UnauthorizedAccessException;
 import com.fonsi13.blogbackend.models.Post;
 import com.fonsi13.blogbackend.models.PostStatus;
 import com.fonsi13.blogbackend.models.User;
@@ -74,11 +77,84 @@ public class PostServiceImpl implements PostService{
     @Override
     public ApiResponse<PostResponseDTO> getPostBySlug(String slug) {
         Post post = postRepository.findBySlug(slug)
-                .orElseThrow(() -> new RuntimeException("Post no encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Post", "slug", slug));
 
         PostResponseDTO response = mapToDTO(post);
 
         return ApiResponse.success("Post encontrado", response);
+    }
+
+    @Override
+    public ApiResponse<PostResponseDTO> updatePost(String postId, PostUpdateRequest request, String currentUsername) {
+        // Buscar el post
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
+
+        // Buscar el usuario actual
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        // Verificar permisos: solo el autor o un ADMIN puede actualizar
+        if (!post.getAuthorId().equals(currentUser.getId()) && !"ADMIN".equals(currentUser.getRole())) {
+            throw new UnauthorizedAccessException("post", "modificar");
+        }
+
+        // Actualizar solo los campos que no son nulos
+        if (request.getTitle() != null) {
+            post.setTitle(request.getTitle());
+            // Regenerar slug si cambia el título
+            post.setSlug(generateSlug(request.getTitle()));
+        }
+        if (request.getContent() != null) {
+            post.setContent(request.getContent());
+        }
+        if (request.getSummary() != null) {
+            post.setSummary(request.getSummary());
+        }
+        if (request.getCoverImage() != null) {
+            post.setCoverImage(request.getCoverImage());
+        }
+        if (request.getImages() != null) {
+            post.setImages(request.getImages());
+        }
+        if (request.getVideoUrls() != null) {
+            post.setVideoUrls(request.getVideoUrls());
+        }
+        if (request.getTopics() != null) {
+            post.setTopics(request.getTopics());
+        }
+        if (request.getStatus() != null) {
+            post.setStatus(request.getStatus());
+        }
+
+        // Actualizar fecha de modificación
+        post.setUpdatedAt(LocalDateTime.now());
+
+        // Guardar cambios
+        Post updatedPost = postRepository.save(post);
+
+        return ApiResponse.success("Post actualizado exitosamente", mapToDTO(updatedPost));
+    }
+
+    @Override
+    public ApiResponse<Void> deletePost(String postId, String currentUsername) {
+        // Buscar el post
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new ResourceNotFoundException("Post", "id", postId));
+
+        // Buscar el usuario actual
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new RuntimeException("Usuario autenticado no encontrado"));
+
+        // Verificar permisos: solo el autor o un ADMIN puede eliminar
+        if (!post.getAuthorId().equals(currentUser.getId()) && !"ADMIN".equals(currentUser.getRole())) {
+            throw new UnauthorizedAccessException("post", "eliminar");
+        }
+
+        // Eliminar el post
+        postRepository.delete(post);
+
+        return ApiResponse.success("Post eliminado exitosamente", null);
     }
 
     // Método utilitario para convertir "Hola Mundo" en "hola-mundo"

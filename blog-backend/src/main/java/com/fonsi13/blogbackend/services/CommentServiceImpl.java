@@ -3,7 +3,9 @@ package com.fonsi13.blogbackend.services;
 import com.fonsi13.blogbackend.dto.ApiResponse;
 import com.fonsi13.blogbackend.dto.CommentCreateRequest;
 import com.fonsi13.blogbackend.dto.CommentResponseDTO;
+import com.fonsi13.blogbackend.dto.CommentUpdateRequest;
 import com.fonsi13.blogbackend.exceptions.ResourceNotFoundException;
+import com.fonsi13.blogbackend.exceptions.UnauthorizedAccessException;
 import com.fonsi13.blogbackend.models.Comment;
 import com.fonsi13.blogbackend.models.User;
 import com.fonsi13.blogbackend.repositories.CommentRepository;
@@ -32,7 +34,6 @@ public class CommentServiceImpl implements CommentService{
             throw new ResourceNotFoundException("Post", "id", postId);
         }
 
-
         User user = userRepository.findByUsername(currentUsername)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", "username", currentUsername));
 
@@ -45,15 +46,7 @@ public class CommentServiceImpl implements CommentService{
 
         Comment saved = commentRepository.save(comment);
 
-        // Convertir a DTO
-        CommentResponseDTO response = CommentResponseDTO.builder()
-                .id(comment.getId())
-                .content(comment.getContent())
-                .authorId(comment.getAuthorId())
-                .createdAt(comment.getCreatedAt())
-                .build();
-
-        return ApiResponse.success("Comentario agregado", response);
+        return ApiResponse.success("Comentario agregado", mapToDTO(saved));
     }
 
     @Override
@@ -61,14 +54,76 @@ public class CommentServiceImpl implements CommentService{
         // Traer paginado desde el repo
         Page<Comment> comments = commentRepository.findByPostId(postId, pageable);
 
-        //Convetir a DTO
-        Page<CommentResponseDTO> dtoPage = comments.map(c -> CommentResponseDTO.builder()
-                .id(c.getId())
-                .content(c.getContent())
-                .authorId(c.getAuthorId())
-                .createdAt(c.getCreatedAt())
-                .build());
+        // Convertir a DTO
+        Page<CommentResponseDTO> dtoPage = comments.map(this::mapToDTO);
 
-        return ApiResponse.success("Comentatios del post", dtoPage);
+        return ApiResponse.success("Comentarios del post", dtoPage);
+    }
+
+    @Override
+    public ApiResponse<CommentResponseDTO> updateComment(String postId, String commentId, CommentUpdateRequest request, String currentUsername) {
+        // Buscar el comentario
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comentario", "id", commentId));
+
+        // Validar que el comentario pertenece al post especificado
+        if (!comment.getPostId().equals(postId)) {
+            throw new ResourceNotFoundException("Comentario", "postId", postId);
+        }
+
+        // Buscar el usuario actual
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "username", currentUsername));
+
+        // Verificar permisos: solo el autor o un ADMIN puede actualizar
+        if (!comment.getAuthorId().equals(currentUser.getId()) && !"ADMIN".equals(currentUser.getRole())) {
+            throw new UnauthorizedAccessException("comentario", "modificar");
+        }
+
+        // Actualizar el contenido
+        comment.setContent(request.getContent());
+        comment.setUpdatedAt(LocalDateTime.now());
+
+        Comment updatedComment = commentRepository.save(comment);
+
+        return ApiResponse.success("Comentario actualizado exitosamente", mapToDTO(updatedComment));
+    }
+
+    @Override
+    public ApiResponse<Void> deleteComment(String postId, String commentId, String currentUsername) {
+        // Buscar el comentario
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Comentario", "id", commentId));
+
+        // Validar que el comentario pertenece al post especificado
+        if (!comment.getPostId().equals(postId)) {
+            throw new ResourceNotFoundException("Comentario", "postId", postId);
+        }
+
+        // Buscar el usuario actual
+        User currentUser = userRepository.findByUsername(currentUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "username", currentUsername));
+
+        // Verificar permisos: solo el autor o un ADMIN puede eliminar
+        if (!comment.getAuthorId().equals(currentUser.getId()) && !"ADMIN".equals(currentUser.getRole())) {
+            throw new UnauthorizedAccessException("comentario", "eliminar");
+        }
+
+        // Eliminar el comentario
+        commentRepository.delete(comment);
+
+        return ApiResponse.success("Comentario eliminado exitosamente", null);
+    }
+
+    // Método auxiliar para mapear Comment a CommentResponseDTO
+    private CommentResponseDTO mapToDTO(Comment comment) {
+        return CommentResponseDTO.builder()
+                .id(comment.getId())
+                .content(comment.getContent())
+                .authorId(comment.getAuthorId())
+                .postId(comment.getPostId())
+                .createdAt(comment.getCreatedAt())
+                .updatedAt(comment.getUpdatedAt())
+                .build();
     }
 }

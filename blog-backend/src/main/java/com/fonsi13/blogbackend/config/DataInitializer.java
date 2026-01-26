@@ -2,31 +2,52 @@ package com.fonsi13.blogbackend.config;
 
 import com.fonsi13.blogbackend.models.User;
 import com.fonsi13.blogbackend.repositories.UserRepository;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.time.LocalDateTime;
+
 @Configuration
 public class DataInitializer {
+
+    @Value("${admin.default.username:admin_fonsi}")
+    private String adminDefaultUsername;
+
+    @Value("${admin.default.email:admin@blog.com}")
+    private String adminDefaultEmail;
+
+    @Value("${admin.default.password:}")
+    private String adminDefaultPassword;
 
     @Bean
     CommandLineRunner initDatabase(UserRepository repository, PasswordEncoder passwordEncoder) {
         return args -> {
-            // SOLUCIÓN: Solo borramos y creamos si NO hay usuarios
+            // Solo creamos el usuario admin si NO hay usuarios en la base de datos
             if (repository.count() == 0) {
 
-                User testUser = new User();
-                testUser.setUsername("admin_fonsi");
-                testUser.setEmail("admin@blog.com");
-                testUser.setPassword(passwordEncoder.encode("admin123")); // ¡Importante encriptar!
-                testUser.setRole("ADMIN");
+                // Validar que la variable de entorno esté configurada
+                if (adminDefaultPassword == null || adminDefaultPassword.isBlank()) {
+                    System.err.println("ERROR: La variable de entorno ADMIN_DEFAULT_PASSWORD no está configurada.");
+                    System.err.println("Por favor, configure la variable antes de iniciar la aplicación.");
+                    throw new IllegalStateException(
+                            "La variable de entorno ADMIN_DEFAULT_PASSWORD es requerida para la primera ejecución");
+                }
 
-                repository.save(testUser);
-                System.out.println("✅ Usuario ADMIN creado por defecto");
+                User adminUser = new User();
+                adminUser.setUsername(adminDefaultUsername);
+                adminUser.setEmail(adminDefaultEmail);
+                adminUser.setPassword(passwordEncoder.encode(adminDefaultPassword));
+                adminUser.setRole("ADMIN");
+                adminUser.setCreatedAt(LocalDateTime.now());
+
+                repository.save(adminUser);
+                System.out.println("Usuario ADMIN creado exitosamente con username: " + adminDefaultUsername);
 
             } else {
-                System.out.println("ℹ️ La base de datos ya tiene usuarios, saltando inicialización.");
+                System.out.println("La base de datos ya tiene usuarios, saltando inicialización del admin.");
             }
         };
     }
