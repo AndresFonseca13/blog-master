@@ -20,6 +20,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.NOT_FOUND);
     }
 
+    // Cuando el usuario no tiene permisos para realizar una acción
+    @ExceptionHandler(UnauthorizedAccessException.class)
+    public ResponseEntity<ApiResponse<Object>> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {
+        return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.FORBIDDEN);
+    }
+
     //  Cuando fallan las validaciones (@NotBlank, @Email, etc.)
     // Esto es vital para que el frontend sepa qué campo llenó mal
     @ExceptionHandler(MethodArgumentNotValidException.class)
