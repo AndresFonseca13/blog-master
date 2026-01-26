@@ -1,4 +1,4 @@
-package com.fonsi13.blogbackend.security.oauth2;
+package com.fonsi13.blogbackend.config.security.oauth2;
 
 import com.fonsi13.blogbackend.models.AuthProvider;
 

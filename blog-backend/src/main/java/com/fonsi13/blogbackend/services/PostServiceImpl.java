@@ -165,7 +165,7 @@ public class PostServiceImpl implements PostService{
         return slug.toLowerCase(Locale.ENGLISH) + "-" + System.currentTimeMillis(); // Agregamos tiempo para evitar duplicados
     }
 
-    // Método auxiliar para no repetir código (Úsalo también en getAllPosts y getPostBySlug)
+    // Método auxiliar para no repetir código
     private PostResponseDTO mapToDTO(Post post) {
         return PostResponseDTO.builder()
                 .id(post.getId())

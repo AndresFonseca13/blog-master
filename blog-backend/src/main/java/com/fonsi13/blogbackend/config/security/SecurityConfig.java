@@ -1,7 +1,7 @@
 package com.fonsi13.blogbackend.config.security;
 
-import com.fonsi13.blogbackend.security.oauth2.CustomOAuth2UserService;
-import com.fonsi13.blogbackend.security.oauth2.OAuth2AuthenticationSuccessHandler;
+import com.fonsi13.blogbackend.config.security.oauth2.CustomOAuth2UserService;
+import com.fonsi13.blogbackend.config.security.oauth2.OAuth2AuthenticationSuccessHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
