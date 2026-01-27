@@ -12,6 +12,7 @@ import com.fonsi13.blogbackend.models.User;
 import com.fonsi13.blogbackend.repositories.PostRepository;
 import com.fonsi13.blogbackend.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -23,10 +24,12 @@ import java.util.regex.Pattern;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PostServiceImpl implements PostService{
 
     private final PostRepository postRepository;
     private final UserRepository userRepository;
+    private final StorageService storageService;
 
 
     @Override
@@ -151,10 +154,39 @@ public class PostServiceImpl implements PostService{
             throw new UnauthorizedAccessException("post", "eliminar");
         }
 
+        // Eliminar imágenes asociadas de Supabase Storage
+        deletePostImages(post);
+
         // Eliminar el post
         postRepository.delete(post);
 
         return ApiResponse.success("Post eliminado exitosamente", null);
+    }
+
+    /**
+     * Elimina todas las imágenes asociadas a un post de Supabase Storage.
+     * Los errores en la eliminación de imágenes no bloquean la eliminación del post.
+     */
+    private void deletePostImages(Post post) {
+        log.info("Iniciando eliminación de imágenes para post: {}", post.getId());
+
+        // Eliminar coverImage
+        if (post.getCoverImage() != null && !post.getCoverImage().isBlank()) {
+            log.debug("Eliminando coverImage: {}", post.getCoverImage());
+            storageService.deleteImage(post.getCoverImage());
+        }
+
+        // Eliminar galería de imágenes
+        if (post.getImages() != null && !post.getImages().isEmpty()) {
+            log.debug("Eliminando {} imágenes de la galería", post.getImages().size());
+            post.getImages().forEach(imageUrl -> {
+                if (imageUrl != null && !imageUrl.isBlank()) {
+                    storageService.deleteImage(imageUrl);
+                }
+            });
+        }
+
+        log.info("Proceso de eliminación de imágenes completado para post: {}", post.getId());
     }
 
     // Método utilitario para convertir "Hola Mundo" en "hola-mundo"
