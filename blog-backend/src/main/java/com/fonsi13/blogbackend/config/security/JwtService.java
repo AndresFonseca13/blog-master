@@ -3,7 +3,6 @@ package com.fonsi13.blogbackend.config.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -72,7 +71,10 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(secretKey); // Decodificamos la clave
-        return Keys.hmacShaKeyFor(secretKey.getBytes());
-}
+        byte[] keyBytes = secretKey.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        if (keyBytes.length < 32) {
+            throw new IllegalArgumentException("JWT_SECRET debe tener al menos 32 caracteres (256 bits) para HS256");
+        }
+        return Keys.hmacShaKeyFor(keyBytes);
+    }
 }

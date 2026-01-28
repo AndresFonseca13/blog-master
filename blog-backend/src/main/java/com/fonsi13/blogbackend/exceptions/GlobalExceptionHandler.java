@@ -1,6 +1,7 @@
 package com.fonsi13.blogbackend.exceptions;
 
 import com.fonsi13.blogbackend.dto.ApiResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -8,9 +9,12 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice //Maneja los errores de TODOS los controladores aquí
 public class GlobalExceptionHandler {
 
@@ -45,11 +49,23 @@ public class GlobalExceptionHandler {
         );
     }
 
+    // Cuando el archivo excede el tamaño máximo configurado en Spring (5MB)
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<ApiResponse<Object>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+        log.warn("Intento de subida de archivo excediendo el tamaño máximo: {}", ex.getMessage());
+        return new ResponseEntity<>(
+                ApiResponse.error("El archivo excede el tamaño máximo permitido (5MB)"),
+                HttpStatus.BAD_REQUEST
+        );
+    }
+
     // Cualquier otro error no controlado (RuntimeException genérica)
+    // Se loggea el detalle internamente pero NO se expone al cliente (OWASP A01:2021)
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Object>> handleGlobalException(Exception ex) {
+        log.error("Error interno no controlado: {}", ex.getMessage(), ex);
         return new ResponseEntity<>(
-                ApiResponse.error("Error interno del servidor: " + ex.getMessage()),
+                ApiResponse.error("Error interno del servidor. Intente nuevamente más tarde."),
                 HttpStatus.INTERNAL_SERVER_ERROR
         );
     }
