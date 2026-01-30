@@ -1,7 +1,6 @@
 package com.fonsi13.blogbackend.controllers;
 
 import com.fonsi13.blogbackend.dto.*;
-import com.fonsi13.blogbackend.models.User;
 import com.fonsi13.blogbackend.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
