@@ -1,9 +1,13 @@
 package com.fonsi13.blogbackend.controllers;
 
 import com.fonsi13.blogbackend.dto.*;
+import com.fonsi13.blogbackend.models.User;
+import com.fonsi13.blogbackend.repositories.UserRepository;
 import com.fonsi13.blogbackend.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -12,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
 
     private final UserService userService;
+    private final UserRepository userRepository;
 
     @PostMapping("register")
     public ResponseEntity<ApiResponse<UserResponseDTO>> register(@RequestBody UserRegistrationRequest request){
@@ -36,9 +41,26 @@ public class UserController {
         }
     }
 
-    @GetMapping("/me") // GET /api/v1/users/me
-    public ResponseEntity<ApiResponse<String>> sayHello() {
-        return ResponseEntity.ok(ApiResponse.success("¡Bienvenido! Has entrado a una zona segura.", "Datos secretos aquí"));
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserResponseDTO>> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+
+        UserResponseDTO userDTO = UserResponseDTO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .role(user.getRole())
+                .createdAt(user.getCreatedAt())
+                .provider(user.getProvider())
+                .profilePicture(user.getProfilePicture())
+                .emailVerified(user.isEmailVerified())
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success("Usuario obtenido correctamente", userDTO));
     }
 
 }
