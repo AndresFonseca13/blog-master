@@ -33,10 +33,13 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
         http
+                // Habilitamos CORS
+                .cors(cors -> {})
                 // Desactivamos CSRF porque usamos JWT (es estándar en APIs REST)
                 .csrf(AbstractHttpConfigurer::disable)
                 // Definimos las reglas de las rutas
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/api/v1/users/register").permitAll()
                         .requestMatchers("/api/v1/users/login").permitAll()
                         .requestMatchers("/api/v1/auth/**").permitAll()
