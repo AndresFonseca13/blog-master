@@ -23,12 +23,7 @@ instance.interceptors.response.use(
         return response;
     },
     (error) => {
-        if (error.response?.status === 401) {
-            localStorage.removeItem('token');
-            window.location.href = '/login';
-            return Promise.reject(error);
-        }
-
+        return Promise.reject(error);
     }
 );
 
