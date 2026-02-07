@@ -3,5 +3,6 @@ import { Login } from "./Login.tsx";
 import { Register } from "./Register.tsx";
 import { Profile } from "./Profile.tsx";
 import { Settings } from "./Settings.tsx";
+import { PostDetail } from "./PostDetail.tsx"
 
-export { Home, Login, Register, Profile, Settings };
+export { Home, Login, Register, Profile, Settings, PostDetail };
