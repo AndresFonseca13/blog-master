@@ -1,5 +1,5 @@
 import {Routes, Route, BrowserRouter} from 'react-router-dom';
-import {  Home, Login, Register, Profile, Settings} from './pages';
+import {Home, Login, Register, Profile, Settings, PostDetail} from './pages';
 import { ProtectedRoute } from './components/ProtectedRoute.tsx';
 import { AuthProvider} from "./context/AuthContext.tsx";
 
@@ -11,6 +11,7 @@ const App = () =>  {
               <Route path="/" element={<Home/>}/>
               <Route path="/login" element={<Login/>}/>
               <Route path="/register" element={<Register/>}/>
+              <Route path="/posts/:slug" element={<PostDetail/>}/>
               <Route path="/settings" element={
                   <ProtectedRoute>
                       <Settings/>
