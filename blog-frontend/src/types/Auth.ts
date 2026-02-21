@@ -34,3 +34,9 @@ export interface LoginResponse{
     user: User
 }
 
+export interface UpdateProfileRequest{
+    username?: string,
+    email?: string,
+    password?: string,
+    profilePicture?: string,
+}
