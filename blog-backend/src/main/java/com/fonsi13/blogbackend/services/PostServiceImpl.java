@@ -9,6 +9,7 @@ import com.fonsi13.blogbackend.exceptions.UnauthorizedAccessException;
 import com.fonsi13.blogbackend.models.Post;
 import com.fonsi13.blogbackend.models.PostStatus;
 import com.fonsi13.blogbackend.models.User;
+import com.fonsi13.blogbackend.repositories.CommentRepository;
 import com.fonsi13.blogbackend.repositories.PostRepository;
 import com.fonsi13.blogbackend.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class PostServiceImpl implements PostService{
     private final PostRepository postRepository;
     private final UserRepository userRepository;
     private final StorageService storageService;
+    private final CommentRepository commentRepository;
 
 
     @Override
@@ -67,14 +69,22 @@ public class PostServiceImpl implements PostService{
     }
 
     @Override
-    public ApiResponse<Page<PostResponseDTO>> getAllPosts(Pageable pageable) {
-        // 1. Buscar paginado en Mongo
-        Page<Post> postsPage = postRepository.findAll(pageable);
+    public ApiResponse<Page<PostResponseDTO>> getAllPosts(Pageable pageable, String currentUsername) {
+        Page<Post> postsPage;
 
-        // 2. Mapear cada entidad post a postResponseDTO
-        Page<PostResponseDTO> dtoPage = postsPage.map(post -> mapToDTO(post));
+        if (currentUsername != null) {
+            User user = userRepository.findByUsername(currentUsername).orElse(null);
+            if (user != null && "ADMIN".equals(user.getRole())) {
+                postsPage = postRepository.findAll(pageable); // Admin ve todo
+            } else {
+                postsPage = postRepository.findByStatus(PostStatus.PUBLISHED, pageable);
+            }
+        } else {
+            postsPage = postRepository.findByStatus(PostStatus.PUBLISHED, pageable);
+        }
 
-        return ApiResponse.success("Posts Obtenidos exitosamente", dtoPage);
+        Page<PostResponseDTO> dtoPage = postsPage.map(this::mapToDTO);
+        return ApiResponse.success("Posts obtenidos exitosamente", dtoPage);
     }
 
     @Override
@@ -156,6 +166,9 @@ public class PostServiceImpl implements PostService{
 
         // Eliminar imágenes asociadas de Supabase Storage
         deletePostImages(post);
+
+        // Eliminar comentarios asociados al post
+        commentRepository.deleteByPostId(postId);
 
         // Eliminar el post
         postRepository.delete(post);

@@ -24,6 +24,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.NOT_FOUND);
     }
 
+    // Cuando el usuario no existe o tiene credenciales incorrectas
+    @ExceptionHandler(CredentialsIncorrectException.class)
+    public ResponseEntity<ApiResponse<Object>> handleCredentialsIncorrectException(CredentialsIncorrectException ex) {
+        return new ResponseEntity<>(ApiResponse.error(ex.getMessage()), HttpStatus.UNAUTHORIZED);
+    }
+
     // Cuando el usuario no tiene permisos para realizar una acción
     @ExceptionHandler(UnauthorizedAccessException.class)
     public ResponseEntity<ApiResponse<Object>> handleUnauthorizedAccessException(UnauthorizedAccessException ex) {

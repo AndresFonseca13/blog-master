@@ -12,7 +12,7 @@ public interface PostService {
     ApiResponse<PostResponseDTO> createPost(PostCreateRequest request, String currentUsername);
 
     // Devuelve una "Página" de posts, no una lista simple
-    ApiResponse<Page<PostResponseDTO>> getAllPosts(Pageable pageable);
+    ApiResponse<Page<PostResponseDTO>> getAllPosts(Pageable pageable, String currentUsername);
 
     // Leer un solo post por su URL (Slug)
     ApiResponse<PostResponseDTO> getPostBySlug(String slug);

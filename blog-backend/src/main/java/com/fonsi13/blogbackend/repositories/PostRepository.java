@@ -1,6 +1,9 @@
 package com.fonsi13.blogbackend.repositories;
 
 import com.fonsi13.blogbackend.models.Post;
+import com.fonsi13.blogbackend.models.PostStatus;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,4 +16,6 @@ public interface PostRepository extends MongoRepository<Post, String> {
     List<Post> findByAuthorId(String authorId);
     // Para buscar por slug
     Optional<Post> findBySlug(String slug);
+
+    Page<Post> findByStatus(PostStatus status, Pageable pageable);
 }

@@ -14,7 +14,7 @@ public class UserRegistrationRequest {
     @Email(message = "El formato de email no es valido")
     private String email;
 
-    @Size(min = 6, message = "La contraseña debe tener al menos 6 caracteres")
+    @Size(min = 8, message = "La contraseña debe tener al menos 8 caracteres")
     private String password;
 
 }

@@ -2,6 +2,7 @@ package com.fonsi13.blogbackend.services;
 
 import com.fonsi13.blogbackend.config.security.JwtService;
 import com.fonsi13.blogbackend.dto.*;
+import com.fonsi13.blogbackend.exceptions.CredentialsIncorrectException;
 import com.fonsi13.blogbackend.exceptions.ResourceNotFoundException;
 import com.fonsi13.blogbackend.models.AuthProvider;
 import com.fonsi13.blogbackend.models.User;
@@ -53,7 +54,7 @@ public class UserServiceImpl implements UserService{
     public ApiResponse<AuthResponseDTO> login(UserLoginRequest request) {
         // Buscar usuario por username
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "username", request.getUsername()));
+                .orElseThrow(CredentialsIncorrectException::new);
 
         // Verificar que el usuario tenga password (no sea solo OAuth)
         if (user.getPassword() == null || user.getPassword().isEmpty()) {
@@ -76,6 +77,13 @@ public class UserServiceImpl implements UserService{
                 .build();
 
         return ApiResponse.success("Login exitoso", authResponse);
+    }
+
+    @Override
+    public UserResponseDTO getCurrentUser(String username) {
+        return userRepository.findByUsername(username)
+                .map(this::mapToDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", "username", username));
     }
 
     // Método auxiliar para mapear User a UserResponseDTO

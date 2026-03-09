@@ -7,6 +7,7 @@ import com.fonsi13.blogbackend.dto.PostUpdateRequest;
 import com.fonsi13.blogbackend.services.PostService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -19,14 +20,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/posts")
 @RequiredArgsConstructor
 @Tag(name = "Posts", description = "Endpoints para gestión de posts del blog")
-public class PostControllers {
+public class PostController {
 
     private final PostService postService;
 
     @PostMapping
     @Operation(summary = "Crear un nuevo post", description = "Crea un nuevo post. Requiere autenticación.")
     public ResponseEntity<ApiResponse<PostResponseDTO>> createPost(
-            @RequestBody PostCreateRequest request,
+            @Valid @RequestBody PostCreateRequest request,
             Authentication authentication
     ){
         String currentUsername = authentication.getName();
@@ -38,9 +39,12 @@ public class PostControllers {
     @GetMapping
     @Operation(summary = "Obtener todos los posts", description = "Retorna una lista paginada de posts.")
     public ResponseEntity<ApiResponse<Page<PostResponseDTO>>> getAllPosts(
-            @PageableDefault(size = 10, sort = "createdAt")Pageable pageable
-    ){
-        ApiResponse<Page<PostResponseDTO>> response = postService.getAllPosts(pageable);
+            Pageable pageable,
+            Authentication authentication
+    ) {
+        String username = authentication != null ? authentication.getName() : null;
+
+        ApiResponse<Page<PostResponseDTO>> response = postService.getAllPosts(pageable, username);
         return ResponseEntity.ok(response);
     }
 
@@ -55,7 +59,7 @@ public class PostControllers {
     @Operation(summary = "Actualizar un post", description = "Actualiza un post existente. Solo el autor o un ADMIN puede actualizar.")
     public ResponseEntity<ApiResponse<PostResponseDTO>> updatePost(
             @PathVariable String id,
-            @RequestBody PostUpdateRequest request,
+            @Valid @RequestBody PostUpdateRequest request,
             Authentication authentication
     ){
         String currentUsername = authentication.getName();
