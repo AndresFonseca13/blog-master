@@ -1,1 +1,8 @@
-/Users/andresfonseca/Document/blog-master/blog-backend/src/test/java/com/fonsi13/blogbackend/BlogBackendApplicationTests.java
+/Volumes/Lexar 1TB/Development/blog-master/blog-backend/src/test/java/com/fonsi13/blogbackend/BlogBackendApplicationTests.java
+/Volumes/Lexar 1TB/Development/blog-master/blog-backend/src/test/java/com/fonsi13/blogbackend/config/security/JwtServiceTest.java
+/Volumes/Lexar 1TB/Development/blog-master/blog-backend/src/test/java/com/fonsi13/blogbackend/exceptions/GlobalExceptionHandlerTest.java
+/Volumes/Lexar 1TB/Development/blog-master/blog-backend/src/test/java/com/fonsi13/blogbackend/models/PasswordResetTokenTest.java
+/Volumes/Lexar 1TB/Development/blog-master/blog-backend/src/test/java/com/fonsi13/blogbackend/services/CommentServiceImplTest.java
+/Volumes/Lexar 1TB/Development/blog-master/blog-backend/src/test/java/com/fonsi13/blogbackend/services/PasswordResetServiceImplTest.java
+/Volumes/Lexar 1TB/Development/blog-master/blog-backend/src/test/java/com/fonsi13/blogbackend/services/PostServiceImplTest.java
+/Volumes/Lexar 1TB/Development/blog-master/blog-backend/src/test/java/com/fonsi13/blogbackend/services/UserServiceImplTest.java

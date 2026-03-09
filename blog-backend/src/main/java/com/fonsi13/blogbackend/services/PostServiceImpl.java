@@ -222,11 +222,10 @@ public class PostServiceImpl implements PostService{
                 .topics(post.getTopics())
                 .status(post.getStatus())
                 .createdAt(post.getCreatedAt())
-                // --- NUEVOS CAMPOS ---
+                .updatedAt(post.getUpdatedAt())
                 .coverImage(post.getCoverImage())
                 .images(post.getImages())
                 .videoUrls(post.getVideoUrls())
-                // ---------------------
                 .build();
     }
 }

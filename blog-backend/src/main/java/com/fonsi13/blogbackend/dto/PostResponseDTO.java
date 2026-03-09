@@ -22,4 +22,5 @@ public class PostResponseDTO {
     private List<String> topics;
     private PostStatus status;
     private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }
